@@ -419,3 +419,41 @@ func testAccIdentityEntityAliasMetadataConfig(entityPrefix string, entitySuffix 
 
 	return result
 }
+
+func TestAccIdentityEntityAlias_optionalCanonicalId(t *testing.T) {
+	entity := acctest.RandomWithPrefix("my-entity")
+	nameEntityAlias := "vault_identity_entity_alias.entity-alias"
+	nameGithubA := "vault_auth_backend.githubA"
+
+	resource.Test(t, resource.TestCase{
+PreCheck:                 func() { testutil.TestAccPreCheck(t) },
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(context.Background(), t),
+		CheckDestroy:             testAccCheckIdentityEntityAliasDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccIdentityEntityAliasOptionalCanonicalIdConfig(entity),
+				Check: resource.ComposeTestCheckFunc(
+resource.TestCheckResourceAttrPair(nameEntityAlias, consts.FieldMountAccessor, nameGithubA, "accessor"),
+// We expect canonical_id to be computed/assigned by Vault if not provided, 
+// or we just check it exists.
+resource.TestCheckResourceAttrSet(nameEntityAlias, "canonical_id"),
+),
+			},
+		},
+	})
+}
+
+func testAccIdentityEntityAliasOptionalCanonicalIdConfig(entityName string) string {
+	return fmt.Sprintf(`
+resource "vault_auth_backend" "githubA" {
+  type = "github"
+  path = "githubA-%s"
+}
+
+resource "vault_identity_entity_alias" "entity-alias" {
+  name = "%s-alias"
+  mount_accessor = vault_auth_backend.githubA.accessor
+  # canonical_id is omitted
+}
+`, entityName, entityName)
+}

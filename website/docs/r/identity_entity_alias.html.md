@@ -40,7 +40,8 @@ The following arguments are supported:
 
 * `mount_accessor` - (Required) Accessor of the mount to which the alias should belong to.
 
-* `canonical_id` - (Required) Entity ID to which this alias belongs to.
+* `canonical_id` - (Optional) Entity ID to which this alias belongs to. If not
+* provided, the alias will be created with an implicit canonical ID
 
 
 ## Attributes Reference
